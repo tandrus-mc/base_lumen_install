@@ -14,8 +14,18 @@ class UsersSeeder extends Seeder
     {
 
         $user = new \App\User();
-        $user->name = 'Tim';
-        $user->api_token = '1234';
+        $user->name = 'Admin';
+        $user->api_token = /*str_random(60)*/ 1234;
+        $user->save();
+
+        $user = new \App\User();
+        $user->name = 'Manager';
+        $user->api_token = str_random(60);
+        $user->save();
+
+        $user = new \App\User();
+        $user->name = 'Client';
+        $user->api_token = str_random(60);
         $user->save();
 
     }

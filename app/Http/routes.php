@@ -12,9 +12,7 @@
 */
 
 $app->group(['prefix' => 'api/'.getenv('API_VERSION'), 'middleware' => 'auth'], function() use ($app){
-    $app->get('/', function () use ($app) {
-        return $app->version();
-    });
 
-    resource('test', 'TestController');
+    resource('leads', 'LeadsController');
+
 });
