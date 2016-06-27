@@ -10,9 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, HasRole
+class User extends Model implements AuthenticatableContract, AuthorizableContract, HasRoleContract
 {
-    use Authenticatable, Authorizable, HasRoleContract;
+
+    use Authenticatable, Authorizable, HasRole;
 
     /**
      * The attributes excluded from the model's JSON form.

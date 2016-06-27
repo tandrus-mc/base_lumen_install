@@ -53,6 +53,7 @@ class LeadsController extends Controller
         ((new Collection($leads, $this->leadTransformer, 'Lead'))
             ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
 
+
     }
 
     public function create(){
