@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\User;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -35,5 +35,18 @@ class AuthServiceProvider extends ServiceProvider
                 return User::where('api_token', $request->input('api_token'))->first();
             }
         });
+
+        $this->app[Gate::class]->define('destroy-lead', function($user){
+            return $user->isAdmin();
+        });
+
+        $this->app[Gate::class]->define('show-lead', function($user, $lead){
+            return ($user->isAdmin() || $user->config_id === $lead->config_id);
+        });
+
+        $this->app[Gate::class]->define('update-lead', function($user){
+            return ($user->isAdmin() || $user->isManager());
+        });
+
     }
 }

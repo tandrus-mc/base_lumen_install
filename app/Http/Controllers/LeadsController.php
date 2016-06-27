@@ -7,8 +7,8 @@ namespace App\Http\Controllers;
 use App\Lead;
 use App\Transformers\LeadTransformer;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Contracts\Auth\Access\Gate;
 use League\Fractal\Manager;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 use League\Fractal\Resource\Collection;
@@ -20,12 +20,16 @@ class LeadsController extends Controller
     protected $manager;
     protected $leadTransformer;
     protected $leads;
+    protected $gate;
+    protected $user;
 
-    public function __construct(Lead $leads){
+    public function __construct(Lead $leads, Gate $gate){
 
         $this->leadTransformer = new LeadTransformer();
         $this->manager         = new Manager();
         $this->leads           = $leads;
+        $this->gate            = $gate;
+        $this->user            = app('request')->user();
 
         $this->manager->setSerializer(new JsonApiSerializer());
 
@@ -33,15 +37,22 @@ class LeadsController extends Controller
 
     public function index(){
 
-        $paginator = $this->leads->paginate();
+        if($this->user->isClient()){
+
+            $paginator = $this->leads->where('config_id', '=', $this->user->config_id)->paginate();
+
+        } else {
+
+            $paginator = $this->leads->paginate();
+
+        }
 
         $leads = $paginator->getCollection();
 
-        $resource = new Collection($leads, $this->leadTransformer, 'Lead');
+        return $this->respondSuccess
+        ((new Collection($leads, $this->leadTransformer, 'Lead'))
+            ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
 
-        $resource->setPaginator(new IlluminatePaginatorAdapter($paginator));
-
-        return response()->json($this->createData($resource), 200);
     }
 
     public function create(){
@@ -50,46 +61,37 @@ class LeadsController extends Controller
 
     public function store(Request $request){
 
-        $this->validateLead($request);
+        $lead = $this->leads->create($this->validateLead($request)->all());
 
-        $lead = $this->leads->create($request->all());
+        $lead->forceFill(['capture_date' => strtotime(Carbon::now()->toDateTimeString())])->save();
 
-        $lead->capture_date = Carbon::now()->format('m/d/Y H:i');
-
-        $resource = new Item($lead, $this->leadTransformer, 'Lead');
-
-        $response = response()->json([
-            'message' => 'success',
-            'lead'    => $this->createData($resource)
-        ], 200);
-
-        return $response;
+        return $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'), 201);
 
     }
 
     public function show($id){
 
-        try {
+        $lead = $this->leads->find($id);
 
-            $lead = $this->leads->findOrFail($id);
+        if(!$lead){
 
-            $resource = new Item($lead, $this->leadTransformer, 'Lead');
+            $response = $this->respondError('This lead cannot be found');
 
-            $response = response()->json($this->createData($resource), 200);
+        } else {
 
-        } catch(ModelNotFoundException $e){
+            if($this->gate->allows('show-lead', $lead)){
 
-            $response = response()->json([
-                'error' => [
-                    'message' => 'This lead cannot be found'
-                ]
-            ], 404);
+                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'));
 
-        } finally {
+            } else {
 
-            return $response;
+                $response = $this->respondError('You do not have sufficient privileges', 403);
+
+            }
 
         }
+
+        return $response;
 
     }
 
@@ -99,42 +101,57 @@ class LeadsController extends Controller
 
     public function update(Request $request, $id){
 
-        try {
+        $lead = $this->leads->find($id);
 
-            $lead = $this->leads->findOrFail($id);
+        if(!$lead){
 
-            $lead->update($this->validateLead($request)->all());
+            $response = $this->respondError('This lead cannot be found');
 
-            $resource = new Item($lead, $this->leadTransformer, 'Lead');
+        } else {
 
-            $response = response()->json([
-                'message' => 'success',
-                'lead'    => $this->createData($resource)
-            ], 200);
+            if($this->gate->allows('update-lead')){
 
-        } catch(ModelNotFoundException $e){
+                $lead->update($this->validateLead($request)->all());
 
-            $response = response()->json([
-                'error' => [
-                    'message' => 'This lead cannot be found'
-                ]
-            ], 404);
+                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'));
 
-        } finally {
+            } else{
 
-            return $response;
+                $response = $this->respondError('You do not have sufficient privileges', 403);
+
+            }
 
         }
+
+        return $response;
 
     }
 
     public function destroy($id){
 
-    }
+        $lead = $this->leads->find($id);
 
-    protected function createData($resource){
+        if(!$lead){
 
-        return $this->manager->createData($resource)->toArray();
+            $response = $this->respondError('This lead cannot be found');
+
+        } else {
+
+            if($this->gate->allows('destroy-lead')){
+
+                $lead->delete();
+
+                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'), 410);
+
+            } else {
+
+                $response = $this->respondError('You do not have sufficient privileges', 403);
+
+            }
+
+        }
+
+        return $response;
 
     }
 
@@ -159,4 +176,30 @@ class LeadsController extends Controller
 
         return $request;
     }
+
+    protected function createData($resource){
+
+        return $this->manager->createData($resource);
+
+    }
+
+    protected function respondSuccess($resource, $code = 200){
+
+        return response()->json([
+            'message' => 'success',
+            'leads'    => $this->createData($resource)->toArray()
+        ], $code);
+
+    }
+
+    protected function respondError($message, $code = 404){
+
+        return response()->json([
+            'error' => [
+                'message' => $message
+            ]
+        ], $code);
+
+    }
+
 }

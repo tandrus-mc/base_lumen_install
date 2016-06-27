@@ -14,23 +14,31 @@ class LeadsSeeder extends Seeder
     {
         $faker = Faker\Factory::create();
 
-        for($i = 0; $i < 20; $i++){
-            \App\Lead::create([
-                'config_id'         => $faker->numberBetween(1200, 1500),
-                'email'             => $faker->email,
-                'ip'                => $faker->ipv4,
-                'referring_url'     => $faker->url,
-                'home_phone'        => $faker->phoneNumber,
-                'first_name'        => $faker->firstName,
-                'last_name'         => $faker->lastName,
-                'address'           => $faker->streetAddress,
-                'city'              => $faker->city,
-                'state'             => 'CA',
-                'zip'               => $faker->postcode,
-                'country'           => $faker->country,
-                'registration_date' => $faker->date(),
-                'capture_date'      => $faker->date(),
-            ]);
+        $users = \App\User::all();
+
+        foreach($users as $user){
+
+            if($user->isClient()){
+                for($i = 0; $i < 20; $i++){
+                    \App\Lead::create([
+                        'config_id'         => $user->config_id,
+                        'email'             => $faker->email,
+                        'ip'                => $faker->ipv4,
+                        'referring_url'     => $faker->url,
+                        'home_phone'        => $faker->phoneNumber,
+                        'first_name'        => $faker->firstName,
+                        'last_name'         => $faker->lastName,
+                        'address'           => $faker->streetAddress,
+                        'city'              => $faker->city,
+                        'state'             => 'CA',
+                        'zip'               => $faker->postcode,
+                        'country'           => $faker->country,
+                        'registration_date' => $faker->time('m/d/Y H:i'),
+                        'capture_date'      => strtotime($faker->time()),
+                    ]);
+                }
+            }
+
         }
     }
 }

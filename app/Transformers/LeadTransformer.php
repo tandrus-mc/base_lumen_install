@@ -25,7 +25,7 @@ class LeadTransformer extends TransformerAbstract
             'zip'               => $lead->zip,
             'country'           => $lead->country,
             'registration_date' => $lead->registration_date,
-            'capture_date'      => $lead->capture_date,
+            'capture_date'      => $lead->capture_date->format('m/d/Y H:i'),
         ];
     }
 }

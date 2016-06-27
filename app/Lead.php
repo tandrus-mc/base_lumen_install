@@ -4,10 +4,12 @@
 namespace App;
 
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Lead extends Model
 {
+
     protected $fillable = [
         'config_id',
         'email',
@@ -26,6 +28,20 @@ class Lead extends Model
 
     protected $dates = [
         'created_at',
-        'updated_at'
+        'updated_at',
+        'capture_date'
     ];
+
+    public function getCaptureDateAttribute(){
+
+        return Carbon::createFromFormat('m/d/Y H:i', $this->attributes['capture_date']);
+
+    }
+
+    public function setCaptureDateAttribute($date){
+
+        $this->attributes['capture_date'] = Carbon::createFromTimestamp($date)->format('m/d/Y H:i');
+
+    }
+
 }
