@@ -1,6 +1,6 @@
 <?php
 
-function resource($uri, $controller)
+function resource($uri, $controller, $app)
 {
     //$verbs = array('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE');
     global $app;

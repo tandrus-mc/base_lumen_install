@@ -14,6 +14,7 @@ use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\JsonApiSerializer;
+use Tymon\JWTAuth\JWTAuth;
 
 class LeadsController extends Controller
 {
@@ -21,15 +22,15 @@ class LeadsController extends Controller
     protected $leadTransformer;
     protected $leads;
     protected $gate;
-    protected $user;
+    protected $jwt;
 
-    public function __construct(Lead $leads, Gate $gate){
+    public function __construct(Lead $leads, Gate $gate, JWTAuth $jwt){
 
         $this->leadTransformer = new LeadTransformer();
         $this->manager         = new Manager();
         $this->leads           = $leads;
         $this->gate            = $gate;
-        $this->user            = app('request')->user();
+        $this->jwt             = $jwt;
 
         $this->manager->setSerializer(new JsonApiSerializer());
 
@@ -37,9 +38,9 @@ class LeadsController extends Controller
 
     public function index(){
 
-        if($this->user->isClient()){
+        if($this->jwt->user()->isClient()){
 
-            $paginator = $this->leads->where('config_id', '=', $this->user->config_id)->paginate();
+            $paginator = $this->leads->where('config_id', '=', $this->jwt->user()->config_id)->paginate();
 
         } else {
 

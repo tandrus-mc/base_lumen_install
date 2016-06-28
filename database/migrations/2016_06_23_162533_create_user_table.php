@@ -15,9 +15,11 @@ class CreateUserTable extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('role_id');
+            $table->string('login')->unique();
+            $table->string('password');
             $table->foreign('role_id')->references('id')->on('roles');
             $table->unsignedInteger('config_id');
-            $table->string('api_token', 60)->unique();
+//            $table->string('api_token', 60)->unique();
             $table->timestamps();
         });
     }

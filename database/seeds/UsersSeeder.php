@@ -18,25 +18,33 @@ class UsersSeeder extends Seeder
         $user = new \App\User();
         $user->config_id = $faker->numberBetween(1200, 1500);
         $user->role_id   = \App\Role::where('name', '=', 'Admin')->first()->id;
-        $user->api_token = /*str_random(60)*/ 'admin';
+        $user->login     = 'admin';
+        $user->password    = app('hash')->make('admin_pass');
+//        $user->api_token = /*str_random(60)*/ 'admin';
         $user->save();
 
         $user = new \App\User();
         $user->config_id = $faker->numberBetween(1200, 1500);
         $user->role_id   = \App\Role::where('name', '=', 'Manager')->first()->id;
-        $user->api_token = /*str_random(60)*/ 'manager';
+        $user->login     = 'manager';
+        $user->password    = app('hash')->make('manager_pass');
+//        $user->api_token = /*str_random(60)*/ 'manager';
         $user->save();
 
         $user = new \App\User();
         $user->config_id = $faker->numberBetween(1200, 1500);
         $user->role_id   = \App\Role::where('name', '=', 'Client')->first()->id;
-        $user->api_token = /*str_random(60)*/ 'client1';
+        $user->login     = 'client_1';
+        $user->password    = app('hash')->make('client_1_pass');
+//        $user->api_token = /*str_random(60)*/ 'client1';
         $user->save();
 
         $user = new \App\User();
         $user->config_id = $faker->numberBetween(1200, 1500);
         $user->role_id   = \App\Role::where('name', '=', 'Client')->first()->id;
-        $user->api_token = /*str_random(60)*/ 'client2';
+        $user->login     = 'client_2';
+        $user->password    = app('hash')->make('client_2_pass');
+//        $user->api_token = /*str_random(60)*/ 'client2';
         $user->save();
 
     }

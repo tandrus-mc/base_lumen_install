@@ -11,8 +11,17 @@
 |
 */
 
-$app->group(['prefix' => 'api/'.getenv('API_VERSION'), 'middleware' => 'auth'], function() use ($app){
 
-    resource('leads', 'LeadsController');
+$app->group(['prefix' => 'api/'.getenv('API_VERSION'), 'namespace' => 'App\Http\Controllers'], function() use ($app){
+
+    $app->post('auth/login', 'AuthController@postLogin');
+
+    $app->group(['prefix' => 'api/'.getenv('API_VERSION'), 'middleware' => 'auth'], function($app){
+
+        resource('leads', 'LeadsController', $app);
+
+        resource('lead-lists', 'LeadListsController', $app);
+
+    });
 
 });

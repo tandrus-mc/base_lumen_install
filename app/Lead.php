@@ -26,21 +26,27 @@ class Lead extends Model
         'registration_date',
     ];
 
-    protected $dates = [
+    /*protected $dates = [
         'created_at',
         'updated_at',
         'capture_date'
-    ];
+    ];*/
 
-    public function getCaptureDateAttribute(){
+    /*public function getCaptureDateAttribute(){
 
         return Carbon::createFromFormat('m/d/Y H:i', $this->attributes['capture_date']);
 
-    }
+    }*/
 
     public function setCaptureDateAttribute($date){
 
         $this->attributes['capture_date'] = Carbon::createFromTimestamp($date)->format('m/d/Y H:i');
+
+    }
+
+    public function leadLists(){
+
+        return $this->belongsToMany('App\LeadList', 'lead_lead_list', 'lead_id', 'lead_list_id');
 
     }
 
