@@ -9,38 +9,28 @@ use App\Transformers\LeadTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Access\Gate;
-use League\Fractal\Manager;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
-use League\Fractal\Serializer\JsonApiSerializer;
 use Tymon\JWTAuth\JWTAuth;
 
-class LeadsController extends Controller
+class LeadsController extends ApiController
 {
-    protected $manager;
-    protected $leadTransformer;
     protected $leads;
-    protected $gate;
-    protected $jwt;
 
-    public function __construct(Lead $leads, Gate $gate, JWTAuth $jwt){
+    public function __construct(Lead $leads, Gate $gate, JWTAuth $JWTAuth){
 
-        $this->leadTransformer = new LeadTransformer();
-        $this->manager         = new Manager();
-        $this->leads           = $leads;
-        $this->gate            = $gate;
-        $this->jwt             = $jwt;
+        parent::__construct($JWTAuth, $gate, new LeadTransformer());
 
-        $this->manager->setSerializer(new JsonApiSerializer());
+        $this->leads = $leads;
 
     }
 
     public function index(){
 
-        if($this->jwt->user()->isClient()){
+        if($this->user->isClient()){
 
-            $paginator = $this->leads->where('config_id', '=', $this->jwt->user()->config_id)->paginate();
+            $paginator = $this->leads->where('config_id', '=', $this->user->config_id)->paginate();
 
         } else {
 
@@ -50,10 +40,10 @@ class LeadsController extends Controller
 
         $leads = $paginator->getCollection();
 
-        return $this->respondSuccess
-        ((new Collection($leads, $this->leadTransformer, 'Lead'))
-            ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
-
+        return $this->respondSuccess(
+            (new Collection($leads, $this->transformer, 'Lead'))
+                ->setPaginator(new IlluminatePaginatorAdapter($paginator))
+        );
 
     }
 
@@ -65,9 +55,12 @@ class LeadsController extends Controller
 
         $lead = $this->leads->create($this->validateLead($request)->all());
 
-        $lead->forceFill(['capture_date' => strtotime(Carbon::now()->toDateTimeString())])->save();
+        $lead->forceFill([
+            'capture_date' => strtotime(Carbon::now()->toDateTimeString()),
+            'config_id'    => $this->user->config_id
+        ])->save();
 
-        return $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'), 201);
+        return $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'), 201);
 
     }
 
@@ -81,13 +74,13 @@ class LeadsController extends Controller
 
         } else {
 
-            if($this->gate->allows('show-lead', $lead)){
+            if($this->gate->allows('show', $lead)){
 
-                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'));
+                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'));
 
             } else {
 
-                $response = $this->respondError('You do not have sufficient privileges', 403);
+                $response = $this->respondPrivilegeError();
 
             }
 
@@ -111,15 +104,15 @@ class LeadsController extends Controller
 
         } else {
 
-            if($this->gate->allows('update-lead')){
+            if($this->gate->allows('update', $lead)){
 
                 $lead->update($this->validateLead($request)->all());
 
-                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'));
+                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'));
 
             } else{
 
-                $response = $this->respondError('You do not have sufficient privileges', 403);
+                $response = $this->respondPrivilegeError();
 
             }
 
@@ -139,15 +132,15 @@ class LeadsController extends Controller
 
         } else {
 
-            if($this->gate->allows('destroy-lead')){
+            if($this->gate->allows('destroy', $lead)){
 
                 $lead->delete();
 
-                $response = $this->respondSuccess(new Item($lead, $this->leadTransformer, 'Lead'), 410);
+                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'), 410);
 
             } else {
 
-                $response = $this->respondError('You do not have sufficient privileges', 403);
+                $response = $this->respondPrivilegeError();
 
             }
 
@@ -177,31 +170,6 @@ class LeadsController extends Controller
         ]);
 
         return $request;
-    }
-
-    protected function createData($resource){
-
-        return $this->manager->createData($resource);
-
-    }
-
-    protected function respondSuccess($resource, $code = 200){
-
-        return response()->json([
-            'message' => 'success',
-            'leads'    => $this->createData($resource)->toArray()
-        ], $code);
-
-    }
-
-    protected function respondError($message, $code = 404){
-
-        return response()->json([
-            'error' => [
-                'message' => $message
-            ]
-        ], $code);
-
     }
 
 }

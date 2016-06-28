@@ -33,7 +33,7 @@ class LeadsSeeder extends Seeder
                         'state'             => 'CA',
                         'zip'               => $faker->postcode,
                         'country'           => $faker->country,
-                        'registration_date' => $faker->time('m/d/Y H:i'),
+                        'registration_date' => $faker->time('m/d/Y H:i:s'),
                         'capture_date'      => strtotime($faker->time()),
                     ]);
                 }

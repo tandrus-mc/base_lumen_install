@@ -7,51 +7,49 @@ namespace App\Http\Controllers;
 use App\Lead;
 use App\LeadList;
 use App\Transformers\LeadListTransformer;
-use App\User;
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Http\Request;
-use League\Fractal\Manager;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 use League\Fractal\Resource\Collection;
-use League\Fractal\Serializer\JsonApiSerializer;
+use League\Fractal\Resource\Item;
 use Tymon\JWTAuth\JWTAuth;
 
-class LeadListsController extends Controller
+class LeadListsController extends ApiController
 {
 
-    protected $manager;
-    protected $leadListTransformer;
     protected $leadList;
     protected $lead;
-    protected $jwt;
-    protected $user;
 
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * LeadListsController constructor.
+     * @param LeadList $leadList
+     * @param Lead $lead
+     * @param JWTAuth $JWTAuth
+     * @param Gate $gate
      */
-    public function __construct(LeadList $leadList, Lead $lead, JWTAuth $jwt)
-    {
-        $this->manager             = new Manager();
-        $this->leadListTransformer = new LeadListTransformer();
-        $this->leadList            = $leadList;
-        $this->lead                = $lead;
-        $this->jwt                 = $jwt;
-        $this->user                = $jwt->user();
-        
+    public function __construct(LeadList $leadList, Lead $lead, JWTAuth $JWTAuth, Gate $gate){
 
-        $this->manager->setSerializer(new JsonApiSerializer());
+        parent::__construct($JWTAuth, $gate, new LeadListTransformer());
+
+        $this->leadList = $leadList;
+        $this->lead     = $lead;
+
+        $this->manager->parseIncludes('lead');
 
     }
 
+    /**
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function index(Request $request){
 
 
-        if($request->input('include') == 'lead'){
+        /*if($request->input('include') == 'lead'){
 
             $this->manager->parseIncludes('lead');
 
-        }
+        }*/
 
         if($this->user->isClient()){
 
@@ -66,8 +64,8 @@ class LeadListsController extends Controller
         $leadLists = $paginator->getCollection();
 
         return $this->respondSuccess
-        ((new Collection($leadLists, $this->leadListTransformer, 'LeadList'))
-            ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
+            ((new Collection($leadLists, $this->transformer, 'LeadList'))
+                ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
 
     }
 
@@ -76,6 +74,10 @@ class LeadListsController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return static
+     */
     public function store(Request $request){
 
         $this->validate($request, [
@@ -86,7 +88,7 @@ class LeadListsController extends Controller
 
         $this->user->leadLists()->attach($leadList);
 
-        return $leadList;
+        return $this->respondSuccess(new Item($leadList, $this->transformer, 'LeadList'));
 
     }
 
@@ -98,44 +100,58 @@ class LeadListsController extends Controller
         //
     }
 
+    /**
+     * @param Request $request
+     * @param $id
+     * @return mixed
+     */
     public function update(Request $request, $id){
 
         $leadList = $this->leadList->find($id);
-        
-        $lead = $this->lead->find($request->lead_id);
 
-        $leadList->leads()->attach($lead);
+        if(!$leadList){
 
-        return $lead;
+            $response = $this->respondError('This LeadList cannot be found.', 404);
+
+        } else {
+
+            if($this->gate->allows('update', $leadList)){
+
+                $lead = $this->lead->find($request->lead_id);
+
+                if(!$lead){
+
+                    $response = $this->respondError('The specified Lead could not be found.', 404);
+
+                } else {
+
+                    if($this->gate->allows('show', $lead)){
+
+                        $leadList->leads()->attach($lead);
+
+                        $response = $this->respondSuccess(new Item($leadList, $this->transformer, 'LeadList'));
+
+                    } else {
+
+                        $response = $this->respondPrivilegeError();
+
+                    }
+
+                }
+
+            } else {
+
+                $response = $this->respondPrivilegeError();
+
+            }
+
+        }
+
+        return $response;
 
     }
 
     public function destroy($id){
-
-    }
-
-    protected function createData($resource){
-
-        return $this->manager->createData($resource);
-
-    }
-
-    protected function respondSuccess($resource, $code = 200){
-
-        return response()->json([
-            'message' => 'success',
-            'leads'    => $this->createData($resource)->toArray()
-        ], $code);
-
-    }
-
-    protected function respondError($message, $code = 404){
-
-        return response()->json([
-            'error' => [
-                'message' => $message
-            ]
-        ], $code);
 
     }
 

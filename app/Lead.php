@@ -11,7 +11,6 @@ class Lead extends Model
 {
 
     protected $fillable = [
-        'config_id',
         'email',
         'ip',
         'referring_url',
@@ -26,21 +25,21 @@ class Lead extends Model
         'registration_date',
     ];
 
-    /*protected $dates = [
+    protected $dates = [
         'created_at',
         'updated_at',
         'capture_date'
-    ];*/
+    ];
 
-    /*public function getCaptureDateAttribute(){
+    public function getCaptureDateAttribute(){
 
-        return Carbon::createFromFormat('m/d/Y H:i', $this->attributes['capture_date']);
+        return Carbon::createFromFormat('m/d/Y H:i:s', $this->attributes['capture_date']);
 
-    }*/
+    }
 
     public function setCaptureDateAttribute($date){
 
-        $this->attributes['capture_date'] = Carbon::createFromTimestamp($date)->format('m/d/Y H:i');
+        $this->attributes['capture_date'] = Carbon::createFromTimestamp($date)->format('m/d/Y H:i:s');
 
     }
 
