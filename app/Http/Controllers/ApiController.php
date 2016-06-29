@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\ControllerImplementations\PreparesResources;
+use App\Http\Controllers\ControllerImplementations\PreparesResourcesContract;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Laravel\Lumen\Routing\Controller as BaseController;
 use League\Fractal\Manager;
@@ -10,13 +12,23 @@ use League\Fractal\TransformerAbstract;
 use Tymon\JWTAuth\JWTAuth;
 
 
-abstract class ApiController extends BaseController
+abstract class ApiController extends BaseController implements PreparesResourcesContract
 {
+
+    use PreparesResources;
+
+    const HTTP_RESPONSE_OK                 = 200;
+    const HTTP_RESPONSE_CREATED            = 201;
+    const HTTP_RESPONSE_UNAUTHORIZED       = 401;
+    const HTTP_RESPONSE_NOT_FOUND          = 404;
+
     protected $manager;
     protected $transformer;
     protected $JWTAuth;
     protected $user;
     protected $gate;
+
+    private   $responseCode = 200;
 
     public function __construct(JWTAuth $JWTAuth, Gate $gate, TransformerAbstract $transformer){
 
@@ -31,34 +43,58 @@ abstract class ApiController extends BaseController
 
     }
 
-    protected function createData($resource){
+    private function createData($resource){
 
         return $this->manager->createData($resource);
 
     }
 
-    protected function respondSuccess($resource, $code = 200){
+    private function setResponseCode($code){
 
-        return response()->json([
-            'message' => 'success',
-            'leads'   => $this->createData($resource)->toArray()
-        ], $code);
+        $this->responseCode = $code;
 
-    }
-
-    protected function respondError($message, $code = 404){
-
-        return response()->json([
-            'error' => [
-                'message' => $message
-            ]
-        ], $code);
+        return $this;
 
     }
 
-    protected function respondPrivilegeError(){
+    private function respondWithResource($resource, $message){
 
-        return $this->respondError('You do not have sufficient privileges.', 403);
+        return response()->json([
+            'message'  => $message,
+            'resource' => $this->createData($resource)->toArray()
+        ], $this->responseCode);
+
+    }
+
+    private function respond($message){
+
+        return response()->json([
+            'message'  => $message,
+        ], $this->responseCode);
+
+    }
+
+    protected function respondOk($resource, $message = 'Success.'){
+
+        return $this->setResponseCode(self::HTTP_RESPONSE_OK)->respondWithResource($resource, $message);
+
+    }
+
+    protected function respondCreated($resource, $message = 'Resource created successfully'){
+
+        return $this->setResponseCode(self::HTTP_RESPONSE_CREATED)->respondWithResource($resource, $message);
+
+    }
+
+    protected function respondUnauthorized($message = 'You do not have sufficient privileges.'){
+
+        return $this->setResponseCode(self::HTTP_RESPONSE_UNAUTHORIZED)->respond($message);
+
+    }
+
+    protected function respondNotFound($message = 'Resource not found.'){
+
+        return $this->setResponseCode(self::HTTP_RESPONSE_NOT_FOUND)->respond($message);
 
     }
 

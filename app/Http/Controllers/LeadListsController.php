@@ -9,9 +9,6 @@ use App\LeadList;
 use App\Transformers\LeadListTransformer;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Http\Request;
-use League\Fractal\Pagination\IlluminatePaginatorAdapter;
-use League\Fractal\Resource\Collection;
-use League\Fractal\Resource\Item;
 use Tymon\JWTAuth\JWTAuth;
 
 class LeadListsController extends ApiController
@@ -34,8 +31,6 @@ class LeadListsController extends ApiController
         $this->leadList = $leadList;
         $this->lead     = $lead;
 
-        $this->manager->parseIncludes('lead');
-
     }
 
     /**
@@ -53,19 +48,17 @@ class LeadListsController extends ApiController
 
         if($this->user->isClient()){
 
-            $paginator = $this->user->leadLists()->paginate(5);
+            $paginator = $this->user->leadLists()->paginate();
 
         } else {
 
-            $paginator = $this->leadLists()->paginate(5);
+            $paginator = $this->leadLists()->paginate();
 
         }
 
         $leadLists = $paginator->getCollection();
 
-        return $this->respondSuccess
-            ((new Collection($leadLists, $this->transformer, 'LeadList'))
-                ->setPaginator(new IlluminatePaginatorAdapter($paginator)));
+        return $this->respondOk($this->prepareResource($leadLists, $paginator));
 
     }
 
@@ -88,7 +81,7 @@ class LeadListsController extends ApiController
 
         $this->user->leadLists()->attach($leadList);
 
-        return $this->respondSuccess(new Item($leadList, $this->transformer, 'LeadList'));
+        return $this->respondCreated($this->prepareResource($leadList));
 
     }
 
@@ -111,7 +104,7 @@ class LeadListsController extends ApiController
 
         if(!$leadList){
 
-            $response = $this->respondError('This LeadList cannot be found.', 404);
+            $response = $this->respondNotFound('This LeadList cannot be found.');
 
         } else {
 
@@ -121,7 +114,7 @@ class LeadListsController extends ApiController
 
                 if(!$lead){
 
-                    $response = $this->respondError('The specified Lead could not be found.', 404);
+                    $response = $this->respondNotFound('The specified Lead could not be found.');
 
                 } else {
 
@@ -129,11 +122,11 @@ class LeadListsController extends ApiController
 
                         $leadList->leads()->attach($lead);
 
-                        $response = $this->respondSuccess(new Item($leadList, $this->transformer, 'LeadList'));
+                        $response = $this->respondOk($this->prepareResource($leadList));
 
                     } else {
 
-                        $response = $this->respondPrivilegeError();
+                        $response = $this->respondUnauthorized();
 
                     }
 
@@ -141,7 +134,7 @@ class LeadListsController extends ApiController
 
             } else {
 
-                $response = $this->respondPrivilegeError();
+                $response = $this->respondUnauthorized();
 
             }
 

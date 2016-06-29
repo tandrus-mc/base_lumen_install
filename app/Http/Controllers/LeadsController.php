@@ -9,9 +9,6 @@ use App\Transformers\LeadTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\Access\Gate;
-use League\Fractal\Pagination\IlluminatePaginatorAdapter;
-use League\Fractal\Resource\Collection;
-use League\Fractal\Resource\Item;
 use Tymon\JWTAuth\JWTAuth;
 
 class LeadsController extends ApiController
@@ -40,10 +37,7 @@ class LeadsController extends ApiController
 
         $leads = $paginator->getCollection();
 
-        return $this->respondSuccess(
-            (new Collection($leads, $this->transformer, 'Lead'))
-                ->setPaginator(new IlluminatePaginatorAdapter($paginator))
-        );
+        return $this->respondOk($this->prepareResource($leads, $paginator));
 
     }
 
@@ -60,7 +54,7 @@ class LeadsController extends ApiController
             'config_id'    => $this->user->config_id
         ])->save();
 
-        return $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'), 201);
+        return $this->respondCreated($this->prepareResource($lead));
 
     }
 
@@ -70,17 +64,17 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondError('This lead cannot be found');
+            $response = $this->respondNotFound('This lead cannot be found');
 
         } else {
 
             if($this->gate->allows('show', $lead)){
 
-                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'));
+                $response = $this->respondOk($this->prepareResource($lead));
 
             } else {
 
-                $response = $this->respondPrivilegeError();
+                $response = $this->respondUnauthorized();
 
             }
 
@@ -100,7 +94,7 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondError('This lead cannot be found');
+            $response = $this->respondNotFound('This lead cannot be found');
 
         } else {
 
@@ -108,11 +102,11 @@ class LeadsController extends ApiController
 
                 $lead->update($this->validateLead($request)->all());
 
-                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'));
+                $response = $this->respondOk($this->prepareResource($lead));
 
             } else{
 
-                $response = $this->respondPrivilegeError();
+                $response = $this->respondUnauthorized();
 
             }
 
@@ -128,7 +122,7 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondError('This lead cannot be found');
+            $response = $this->respondNotFound('This lead cannot be found');
 
         } else {
 
@@ -136,11 +130,11 @@ class LeadsController extends ApiController
 
                 $lead->delete();
 
-                $response = $this->respondSuccess(new Item($lead, $this->transformer, 'Lead'), 410);
+                $response = $this->respondOk($this->prepareResource($lead));
 
             } else {
 
-                $response = $this->respondPrivilegeError();
+                $response = $this->respondUnauthorized();
 
             }
 
