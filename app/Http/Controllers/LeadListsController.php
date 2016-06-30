@@ -14,7 +14,7 @@ use Tymon\JWTAuth\JWTAuth;
 class LeadListsController extends ApiController
 {
 
-    protected $leadList;
+    protected $leadLists;
     protected $lead;
 
     /**
@@ -28,8 +28,8 @@ class LeadListsController extends ApiController
 
         parent::__construct($JWTAuth, $gate, new LeadListTransformer());
 
-        $this->leadList = $leadList;
-        $this->lead     = $lead;
+        $this->leadLists = $leadList;
+        $this->lead      = $lead;
 
     }
 
@@ -44,13 +44,13 @@ class LeadListsController extends ApiController
 
         } else {
 
-            $paginator = $this->leadLists()->paginate();
+            $paginator = $this->leadLists->paginate();
 
         }
 
         $leadLists = $paginator->getCollection();
 
-        return $this->respondOk($this->prepareResource($leadLists, $paginator));
+        $this->setResponse($this->okResponse($this->prepareResource($leadLists, $paginator)))->sendResponse();
 
     }
 
@@ -69,11 +69,9 @@ class LeadListsController extends ApiController
            'list_name' => 'required'
         ]);
 
-        $leadList = $this->leadList->create($request->all());
+        $leadList = $this->user->leadLists()->create($request->all());
 
-        $this->user->leadLists()->attach($leadList);
-
-        return $this->respondCreated($this->prepareResource($leadList));
+        $this->setResponse($this->createdResponse($this->prepareResource($leadList)))->sendResponse();
 
     }
 
@@ -92,11 +90,11 @@ class LeadListsController extends ApiController
      */
     public function update(Request $request, $id){
 
-        $leadList = $this->leadList->find($id);
+        $leadList = $this->leadLists->find($id);
 
         if(!$leadList){
 
-            $response = $this->respondNotFound('This LeadList cannot be found.');
+            $this->setResponse($this->notFoundResponse('This LeadList cannot be found.'));
 
         } else {
 
@@ -106,7 +104,7 @@ class LeadListsController extends ApiController
 
                 if(!$lead){
 
-                    $response = $this->respondNotFound('The specified Lead could not be found.');
+                    $this->setResponse($this->notFoundResponse('The specified Lead could not be found.'));
 
                 } else {
 
@@ -114,11 +112,11 @@ class LeadListsController extends ApiController
 
                         $leadList->leads()->attach($lead);
 
-                        $response = $this->respondOk($this->prepareResource($leadList));
+                        $this->setResponse($this->okResponse($this->prepareResource($leadList)));
 
                     } else {
 
-                        $response = $this->respondUnauthorized();
+                        $this->setResponse($this->unauthorizedResponse());
 
                     }
 
@@ -126,13 +124,13 @@ class LeadListsController extends ApiController
 
             } else {
 
-                $response = $this->respondUnauthorized();
+                $this->setResponse($this->unauthorizedResponse());
 
             }
 
         }
 
-        return $response;
+        $this->sendResponse();
 
     }
 

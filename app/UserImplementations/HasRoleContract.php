@@ -14,6 +14,8 @@ interface HasRoleContract
 
     public function role();
 
+    public function getRole();
+
     public function isClient();
 
     public function isManager();

@@ -22,6 +22,8 @@ $app->group(['prefix' => 'api/'.getenv('API_VERSION'), 'namespace' => 'App\Http\
 
         resource('lead-lists', 'LeadListsController', $app);
 
+        resource('users', 'UsersController', $app);
+
     });
 
 });

@@ -7,7 +7,7 @@ use App\Lead;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class LeadPolicy
+class UserPolicy
 {
     use HandlesAuthorization;
 
@@ -21,16 +21,10 @@ class LeadPolicy
 
     }
 
-    public function show(User $user, Lead $lead){
-        return ($user->isAdmin() || $user->config_id === $lead->config_id);
-    }
+    public function index(User $user){
 
-    public function update(User $user, Lead $lead){
         return ($user->isAdmin() || $user->isManager());
-    }
 
-    public function destroy(User $user, Lead $lead){
-        return $user->isAdmin();
     }
 
 }

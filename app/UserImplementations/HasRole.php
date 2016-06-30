@@ -18,6 +18,12 @@ trait HasRole
 
     }
 
+    public function getRole(){
+
+        return $this->role()->first()->name;
+
+    }
+
     public function isAdmin(){
 
         return $this->role()->first()->name == 'Admin';

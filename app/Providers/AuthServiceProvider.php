@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Lead;
 use App\LeadList;
+use App\Policies\UserPolicy;
+use App\User;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Policies\LeadPolicy;
@@ -35,12 +37,14 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->app['auth']->viaRequest('api', function ($request)
         {
-            return \App\User::where('login', $request->input('login'))->first();
+            return User::where('login', $request->input('login'))->first();
         });
 
         $this->app[Gate::class]->policy(Lead::class, LeadPolicy::class);
 
         $this->app[Gate::class]->policy(LeadList::class, LeadListPolicy::class);
+
+        $this->app[Gate::class]->policy(User::class, UserPolicy::class);
 
     }
 }

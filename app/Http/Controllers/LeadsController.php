@@ -46,7 +46,7 @@ class LeadsController extends ApiController
 
         $leads = $paginator->getCollection();
 
-        return $this->respondOk($this->prepareResource($leads, $paginator));
+        $this->setResponse($this->okResponse($this->prepareResource($leads, $paginator)))->sendResponse();
 
     }
 
@@ -68,7 +68,7 @@ class LeadsController extends ApiController
             'config_id'    => $this->user->config_id
         ])->save();
 
-        return $this->respondCreated($this->prepareResource($lead));
+        $this->setResponse($this->createdResponse($this->prepareResource($lead)))->sendResponse();
 
     }
 
@@ -82,23 +82,23 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondNotFound('This lead cannot be found');
+            $this->setResponse($this->notFoundResponse('This lead cannot be found'));
 
         } else {
 
             if($this->gate->allows('show', $lead)){
 
-                $response = $this->respondOk($this->prepareResource($lead));
+                $this->setResponse($this->okResponse($this->prepareResource($lead)));
 
             } else {
 
-                $response = $this->respondUnauthorized();
+                $this->setResponse($this->unauthorizedResponse());
 
             }
 
         }
 
-        return $response;
+        $this->sendResponse();
 
     }
 
@@ -117,7 +117,7 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondNotFound('This lead cannot be found');
+            $this->setResponse($this->notFoundResponse('This lead cannot be found'));
 
         } else {
 
@@ -125,17 +125,17 @@ class LeadsController extends ApiController
 
                 $lead->update($this->validateLead($request)->all());
 
-                $response = $this->respondOk($this->prepareResource($lead));
+                $this->setResponse($this->okResponse($this->prepareResource($lead)));
 
             } else{
 
-                $response = $this->respondUnauthorized();
+                $this->setResponse($this->unauthorizedResponse());
 
             }
 
         }
 
-        return $response;
+        $this->sendResponse();
 
     }
 
@@ -149,7 +149,7 @@ class LeadsController extends ApiController
 
         if(!$lead){
 
-            $response = $this->respondNotFound('This lead cannot be found');
+            $this->setResponse($this->notFoundResponse('This lead cannot be found'));
 
         } else {
 
@@ -157,17 +157,17 @@ class LeadsController extends ApiController
 
                 $lead->delete();
 
-                $response = $this->respondOk($this->prepareResource($lead));
+                $this->setResponse($this->okResponse($this->prepareResource($lead)));
 
             } else {
 
-                $response = $this->respondUnauthorized();
+                $this->setResponse($this->unauthorizedResponse());
 
             }
 
         }
 
-        return $response;
+        $this->sendResponse();
 
     }
 

@@ -28,6 +28,7 @@ abstract class ApiController extends BaseController implements PreparesResources
     protected $user;
     protected $gate;
 
+    private   $response;
     private   $responseCode = 200;
 
     public function __construct(JWTAuth $JWTAuth, Gate $gate, TransformerAbstract $transformer){
@@ -65,7 +66,6 @@ abstract class ApiController extends BaseController implements PreparesResources
         ], $this->responseCode);
 
     }
-
     private function respond($message){
 
         return response()->json([
@@ -74,25 +74,39 @@ abstract class ApiController extends BaseController implements PreparesResources
 
     }
 
-    protected function respondOk($resource, $message = 'Success.'){
+    protected function setResponse($response){
+
+        $this->response = $response;
+
+        return $this;
+
+    }
+
+    protected function sendResponse(){
+
+        return $this->response->send();
+
+    }
+
+    protected function okResponse($resource, $message = 'Success.'){
 
         return $this->setResponseCode(self::HTTP_RESPONSE_OK)->respondWithResource($resource, $message);
 
     }
 
-    protected function respondCreated($resource, $message = 'Resource created successfully'){
+    protected function createdResponse($resource, $message = 'Resource created successfully'){
 
         return $this->setResponseCode(self::HTTP_RESPONSE_CREATED)->respondWithResource($resource, $message);
 
     }
 
-    protected function respondUnauthorized($message = 'You do not have sufficient privileges.'){
+    protected function unauthorizedResponse($message = 'You do not have sufficient privileges.'){
 
         return $this->setResponseCode(self::HTTP_RESPONSE_UNAUTHORIZED)->respond($message);
 
     }
 
-    protected function respondNotFound($message = 'Resource not found.'){
+    protected function notFoundResponse($message = 'Resource not found.'){
 
         return $this->setResponseCode(self::HTTP_RESPONSE_NOT_FOUND)->respond($message);
 
