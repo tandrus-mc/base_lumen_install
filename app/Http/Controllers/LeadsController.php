@@ -15,6 +15,12 @@ class LeadsController extends ApiController
 {
     protected $leads;
 
+    /**
+     * LeadsController constructor.
+     * @param Lead $leads
+     * @param Gate $gate
+     * @param JWTAuth $JWTAuth
+     */
     public function __construct(Lead $leads, Gate $gate, JWTAuth $JWTAuth){
 
         parent::__construct($JWTAuth, $gate, new LeadTransformer());
@@ -23,6 +29,9 @@ class LeadsController extends ApiController
 
     }
 
+    /**
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function index(){
 
         if($this->user->isClient()){
@@ -41,10 +50,15 @@ class LeadsController extends ApiController
 
     }
 
+
     public function create(){
         //
     }
 
+    /**
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function store(Request $request){
 
         $lead = $this->leads->create($this->validateLead($request)->all());
@@ -58,6 +72,10 @@ class LeadsController extends ApiController
 
     }
 
+    /**
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function show($id){
 
         $lead = $this->leads->find($id);
@@ -88,6 +106,11 @@ class LeadsController extends ApiController
         //
     }
 
+    /**
+     * @param Request $request
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function update(Request $request, $id){
 
         $lead = $this->leads->find($id);
@@ -116,6 +139,10 @@ class LeadsController extends ApiController
 
     }
 
+    /**
+     * @param $id
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     public function destroy($id){
 
         $lead = $this->leads->find($id);

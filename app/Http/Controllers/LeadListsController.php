@@ -34,17 +34,9 @@ class LeadListsController extends ApiController
     }
 
     /**
-     * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function index(Request $request){
-
-
-        /*if($request->input('include') == 'lead'){
-
-            $this->manager->parseIncludes('lead');
-
-        }*/
+    public function index(){
 
         if($this->user->isClient()){
 
@@ -69,7 +61,7 @@ class LeadListsController extends ApiController
 
     /**
      * @param Request $request
-     * @return static
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function store(Request $request){
 
